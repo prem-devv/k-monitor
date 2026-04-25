@@ -1,6 +1,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Install build tools for native modules (better-sqlite3, redis-memory-server)
+RUN apk add --no-cache python3 make g++
+
 # Copy root workspace configs
 COPY package.json package-lock.json ./
 # Copy workspace apps
