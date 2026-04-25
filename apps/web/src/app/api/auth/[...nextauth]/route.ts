@@ -4,6 +4,8 @@ import GoogleProvider from 'next-auth/providers/google';
 import AuthentikProvider from 'next-auth/providers/authentik';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
+const host = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
 const handler = NextAuth({
   providers: [
     GithubProvider({
@@ -44,6 +46,7 @@ const handler = NextAuth({
       return session;
     },
   },
+  url: host,
   secret: process.env.NEXTAUTH_SECRET || 'secret',
 });
 
