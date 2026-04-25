@@ -11,7 +11,7 @@ RUN npm ci --workspace=apps/web
 
 # Build
 WORKDIR /app/apps/web
-ARG NEXT_PUBLIC_API_URL=http://api:3001
+ARG NEXT_PUBLIC_API_URL=/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
@@ -26,6 +26,6 @@ COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
 WORKDIR /app/apps/web
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV NEXT_PUBLIC_API_URL=http://api:3001
+ENV NEXT_PUBLIC_API_URL=/api
 
 CMD ["npm", "start"]

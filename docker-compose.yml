@@ -45,7 +45,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api:3001
+      - NEXT_PUBLIC_API_URL=/api
+      - INTERNAL_API_URL=http://api:3001
+      - NEXTAUTH_URL=http://192.168.1.137:3000
+      - NEXTAUTH_SECRET=k-monitor-secret-key-replace-this
     depends_on:
       - api
     restart: unless-stopped
