@@ -16,13 +16,17 @@ RUN npm ci --workspace=apps/api --ignore-scripts
 WORKDIR /app/apps/api
 RUN npx tsc
 
+# Rebuild native modules for production runtime
+WORKDIR /app/apps/api
+RUN npm rebuild better-sqlite3 --build-from-source
+
 FROM node:20-alpine
 WORKDIR /app
 
 RUN mkdir -p /app/data
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget curl
+# Install wget for healthcheck and runtime dependencies for better-sqlite3
+RUN apk add --no-cache wget curl python3 make g++
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
