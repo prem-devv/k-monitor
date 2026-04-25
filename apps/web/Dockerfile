@@ -19,7 +19,7 @@ FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/apps/web/public ./apps/web/public
+RUN test -d /app/apps/web/public && COPY --from=builder /app/apps/web/public ./apps/web/public || true
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
 
