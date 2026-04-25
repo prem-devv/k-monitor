@@ -44,7 +44,8 @@ services:
       - NEXTAUTH_SECRET=super_secret_docker_key_change_me
       - NEXT_PUBLIC_API_URL=http://api:3001
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
