@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    const apiUrl = process.env.INTERNAL_API_URL || 'http://api:3001';
+    const apiUrl = process.env.INTERNAL_API_URL || 'http://localhost:3001';
     return {
       fallback: [
         {

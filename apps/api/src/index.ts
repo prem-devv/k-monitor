@@ -59,6 +59,10 @@ async function start() {
     await fastify.register(monitorRoutes, { prefix: '/api' });
     await fastify.register(statusRoutes, { prefix: '/api' });
 
+    fastify.get('/api/health', async () => {
+      return { status: 'ok', timestamp: Date.now() };
+    });
+
     fastify.get('*', async (request, reply) => {
       return reply.code(404).send({ error: 'Not found' });
     });
