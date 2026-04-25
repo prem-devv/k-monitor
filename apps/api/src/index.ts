@@ -20,13 +20,19 @@ async function start() {
     process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
     console.log(`Using Redis at ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
   } else {
-    const RedisMemoryServer = (await import('redis-memory-server')).default;
-    const redisServer = new RedisMemoryServer();
-    const redisHost = await redisServer.getHost();
-    const redisPort = await redisServer.getPort();
-    process.env.REDIS_HOST = redisHost;
-    process.env.REDIS_PORT = redisPort.toString();
-    console.log(`Started Redis Memory Server at ${redisHost}:${redisPort}`);
+    try {
+      const RedisMemoryServer = (await import('redis-memory-server')).default;
+      const redisServer = new RedisMemoryServer();
+      const redisHost = await redisServer.getHost();
+      const redisPort = await redisServer.getPort();
+      process.env.REDIS_HOST = redisHost;
+      process.env.REDIS_PORT = redisPort.toString();
+      console.log(`Started Redis Memory Server at ${redisHost}:${redisPort}`);
+    } catch (err) {
+      process.env.REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+      process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
+      console.log(`Using default Redis at ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+    }
   }
   try {
     await fastify.register(cors, {

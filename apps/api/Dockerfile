@@ -9,8 +9,8 @@ COPY package.json package-lock.json ./
 # Copy workspace apps
 COPY apps/api ./apps/api
 
-# Install dependencies (only api)
-RUN npm ci --workspace=apps/api
+# Install dependencies (only api, skip devDependencies for production)
+RUN npm ci --workspace=apps/api --omit=dev
 
 # Build
 WORKDIR /app/apps/api
