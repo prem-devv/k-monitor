@@ -19,8 +19,9 @@ services:
       - NODE_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DB_PATH=/app/data/k-monitor.db
     volumes:
-      - ./data:/app/apps/api/data  # Map SQLite db outside
+      - api_data:/app/data
     depends_on:
       - redis
     restart: unless-stopped
@@ -29,19 +30,19 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://api:3001
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=super_secret_docker_key_change_me
-      # - GITHUB_ID=your_id
-      # - GITHUB_SECRET=your_secret
-      # - GOOGLE_ID=your_id
-      # - GOOGLE_SECRET=your_secret
+      - NEXT_PUBLIC_API_URL=http://api:3001
     depends_on:
       - api
     restart: unless-stopped
 
 volumes:
   redis_data:
+  api_data:

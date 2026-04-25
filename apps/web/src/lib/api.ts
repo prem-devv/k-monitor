@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 export interface Monitor {
   id: number;
   name: string;
-  type: 'http' | 'tcp' | 'icmp';
+  type: 'http' | 'tcp' | 'icmp' | 'dns' | 'ssl';
   url: string;
   port?: number;
   interval: number;

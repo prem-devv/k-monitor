@@ -11,8 +11,8 @@ RUN npm ci --workspace=apps/web
 
 # Build
 WORKDIR /app/apps/web
-# NextAuth requires these at build time potentially
-ENV NEXT_PUBLIC_API_URL=http://api:3001
+ARG NEXT_PUBLIC_API_URL=http://api:3001
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
 FROM node:20-alpine

@@ -6,7 +6,6 @@ import { monitorRoutes } from './routes/monitors.js';
 import { statusRoutes } from './routes/status.js';
 import { createWorker } from './workers/monitoring.js';
 import { db, schema } from './db/index.js';
-import { RedisMemoryServer } from 'redis-memory-server';
 import { scheduleAllMonitors } from './services/scheduler.js';
 
 const fastify = Fastify({
@@ -14,12 +13,21 @@ const fastify = Fastify({
 });
 
 async function start() {
-  const redisServer = new RedisMemoryServer();
-  const redisHost = await redisServer.getHost();
-  const redisPort = await redisServer.getPort();
-  process.env.REDIS_HOST = redisHost;
-  process.env.REDIS_PORT = redisPort.toString();
-  console.log(`Started Redis Memory Server at ${redisHost}:${redisPort}`);
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  if (isProduction) {
+    process.env.REDIS_HOST = process.env.REDIS_HOST || 'redis';
+    process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
+    console.log(`Using Redis at ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+  } else {
+    const RedisMemoryServer = (await import('redis-memory-server')).default;
+    const redisServer = new RedisMemoryServer();
+    const redisHost = await redisServer.getHost();
+    const redisPort = await redisServer.getPort();
+    process.env.REDIS_HOST = redisHost;
+    process.env.REDIS_PORT = redisPort.toString();
+    console.log(`Started Redis Memory Server at ${redisHost}:${redisPort}`);
+  }
   try {
     await fastify.register(cors, {
       origin: true,
