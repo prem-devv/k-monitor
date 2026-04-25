@@ -9,12 +9,12 @@ COPY package.json package-lock.json ./
 # Copy workspace apps
 COPY apps/api ./apps/api
 
-# Install dependencies (only api), skip postinstall for redis-memory-server
+# Install dependencies (only api)
 RUN npm ci --workspace=apps/api --ignore-scripts
 
-# Build
+# Build - use npx to ensure tsc is available
 WORKDIR /app/apps/api
-RUN npm run build
+RUN npx tsc
 
 FROM node:20-alpine
 WORKDIR /app
