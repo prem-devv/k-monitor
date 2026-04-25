@@ -1,6 +1,8 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
+export const dynamic = 'force-dynamic';
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -21,11 +23,12 @@ const handler = NextAuth({
     signIn: '/auth/signin',
   },
   callbacks: {
-    session({ session, token }) {
+    async session({ session, token }) {
       return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET || 'default-secret-change-in-production',
+  useSecureCookies: false,
 });
 
 export { handler as GET, handler as POST };
