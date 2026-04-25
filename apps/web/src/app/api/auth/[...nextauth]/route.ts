@@ -22,13 +22,33 @@ const handler = NextAuth({
   pages: {
     signIn: '/auth/signin',
   },
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
     async session({ session, token }) {
       return session;
     },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    }
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
   },
   secret: process.env.NEXTAUTH_SECRET || 'default-secret-change-in-production',
-  useSecureCookies: false,
 });
 
 export { handler as GET, handler as POST };

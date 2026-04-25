@@ -2,15 +2,18 @@
 
 import { signIn } from 'next-auth/react';
 import { Activity } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export default function SignIn() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const handleLocalAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    signIn('credentials', { username, password, callbackUrl: '/' });
+    signIn('credentials', { username, password, callbackUrl });
   };
 
   return (
