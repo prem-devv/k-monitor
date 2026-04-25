@@ -26,5 +26,6 @@ COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
 WORKDIR /app/apps/web
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV NEXT_PUBLIC_API_URL=http://api:3001
 
 CMD ["npm", "start"]

@@ -44,6 +44,8 @@ services:
         - NEXT_PUBLIC_API_URL=http://api:3001
     ports:
       - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:3001
     depends_on:
       - api
     restart: unless-stopped
