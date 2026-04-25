@@ -9,8 +9,8 @@ COPY package.json package-lock.json ./
 # Copy workspace apps
 COPY apps/api ./apps/api
 
-# Install dependencies (only api, skip devDependencies for production)
-RUN npm ci --workspace=apps/api --omit=dev
+# Install dependencies (only api), skip postinstall for redis-memory-server
+RUN npm ci --workspace=apps/api --ignore-scripts
 
 # Build
 WORKDIR /app/apps/api
