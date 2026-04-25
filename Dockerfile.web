@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache python3 make g++
+
+COPY package.json ./
+COPY apps/web/package.json ./apps/web/
+
+RUN npm install --ignore-scripts
+
+COPY apps/web ./apps/web
+
+RUN cd apps/web && npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start", "--workspace=apps/web"]
