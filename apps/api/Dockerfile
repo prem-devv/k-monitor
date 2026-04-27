@@ -12,7 +12,7 @@ RUN npx tsc
 FROM node:20-alpine
 WORKDIR /app
 
-RUN mkdir -p /app/data
+RUN apk add --no-cache iputils && mkdir -p /app/data
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules

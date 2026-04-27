@@ -2,6 +2,14 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
+// Ensure the browser never uses a stale cached response for API calls
+const http = axios.create({
+  headers: {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+  },
+});
+
 export interface Monitor {
   id: number;
   name: string;
@@ -46,42 +54,42 @@ export interface PublicStatus {
 
 export const api = {
   getMonitors: async (): Promise<Monitor[]> => {
-    const { data } = await axios.get(`${API_URL}/monitors`);
+    const { data } = await http.get(`${API_URL}/monitors`);
     return data;
   },
 
   getMonitor: async (id: number): Promise<Monitor> => {
-    const { data } = await axios.get(`${API_URL}/monitors/${id}`);
+    const { data } = await http.get(`${API_URL}/monitors/${id}`);
     return data;
   },
 
   createMonitor: async (monitor: Partial<Monitor>): Promise<Monitor> => {
-    const { data } = await axios.post(`${API_URL}/monitors`, monitor);
+    const { data } = await http.post(`${API_URL}/monitors`, monitor);
     return data;
   },
 
   updateMonitor: async (id: number, monitor: Partial<Monitor>): Promise<Monitor> => {
-    const { data } = await axios.put(`${API_URL}/monitors/${id}`, monitor);
+    const { data } = await http.put(`${API_URL}/monitors/${id}`, monitor);
     return data;
   },
 
   deleteMonitor: async (id: number): Promise<void> => {
-    await axios.delete(`${API_URL}/monitors/${id}`);
+    await http.delete(`${API_URL}/monitors/${id}`);
   },
 
   getHeartbeats: async (id: number, limit?: number): Promise<Heartbeat[]> => {
     const params = limit ? `?limit=${limit}` : '';
-    const { data } = await axios.get(`${API_URL}/monitors/${id}/heartbeats${params}`);
+    const { data } = await http.get(`${API_URL}/monitors/${id}/heartbeats${params}`);
     return data;
   },
 
   getPublicStatus: async (): Promise<PublicStatus> => {
-    const { data } = await axios.get(`${API_URL}/status`);
+    const { data } = await http.get(`${API_URL}/status`);
     return data;
   },
 
   testWebhook: async (url: string): Promise<{ success: boolean }> => {
-    const { data } = await axios.post(`${API_URL}/webhooks/test`, { url });
+    const { data } = await http.post(`${API_URL}/webhooks/test`, { url });
     return data;
   },
 };

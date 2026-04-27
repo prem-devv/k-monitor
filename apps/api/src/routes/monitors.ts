@@ -88,13 +88,21 @@ export async function monitorRoutes(fastify: FastifyInstance) {
       active: true,
     });
     
+    // Run first check immediately and await it so caller gets real status
     try {
       await scheduleMonitorWithInterval(monitor.id, monitor.interval);
     } catch (error) {
       console.error('Failed to schedule monitor:', error);
     }
 
-    return reply.code(201).send(monitor);
+    // Return monitor with real status from first check
+    const heartbeats = jsonDb.heartbeats.findMany(monitor.id, 1);
+    const lastHeartbeat = heartbeats.length > 0 ? heartbeats[0] : null;
+    return reply.code(201).send({
+      ...monitor,
+      status: lastHeartbeat?.status || 'pending',
+      latency: lastHeartbeat?.latency || null,
+    });
   });
 
   fastify.put('/monitors/:id', async (request, reply) => {
