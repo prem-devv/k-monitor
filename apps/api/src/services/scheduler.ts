@@ -1,6 +1,27 @@
 import { jsonDb } from '../db/jsonDb.js';
+import axios from 'axios';
 
 const intervals: Map<number, NodeJS.Timeout> = new Map();
+// Track last known status per monitor to detect state changes for webhooks
+const lastStatus: Map<number, 'up' | 'down'> = new Map();
+
+async function sendWebhookNotification(
+  webhookUrl: string,
+  monitor: { id: number; name: string; type: string; url: string },
+  status: 'up' | 'down',
+  message: string
+): Promise<void> {
+  try {
+    const emoji = status === 'up' ? '✅' : '🔴';
+    const statusText = status === 'up' ? 'RECOVERED' : 'DOWN';
+    await axios.post(webhookUrl, {
+      text: `${emoji} *K-Monitor Alert*\nMonitor: *${monitor.name}*\nStatus: *${statusText}*\nType: ${monitor.type.toUpperCase()}\nTarget: ${monitor.url}\nMessage: ${message}\nTime: ${new Date().toISOString()}`,
+    }, { timeout: 10000 });
+    console.log(`[WEBHOOK] Sent ${statusText} notification for monitor ${monitor.id} to ${webhookUrl}`);
+  } catch (err: any) {
+    console.error(`[WEBHOOK ERROR] monitor=${monitor.id}:`, err?.message);
+  }
+}
 
 async function runCheck(
   monitorId: number,
@@ -18,7 +39,6 @@ async function runCheck(
 
   try {
     if (type === 'http') {
-      const { default: axios } = await import('axios');
       const https = await import('https');
       const httpsAgent = new https.Agent({ rejectUnauthorized: false });
       const response = await axios.get(url, {
@@ -40,20 +60,18 @@ async function runCheck(
       }
     } else if (type === 'tcp') {
       const net = await import('net');
+      const host = url.replace(/^(?:https?:\/\/)?/, '').split(/[/?#:]/)[0];
       const tcpResult = await new Promise<{ up: boolean; latency: number; message: string }>((resolve) => {
         const socket = new net.Socket();
         const timer = setTimeout(() => {
           socket.destroy();
           resolve({ up: false, latency: timeout * 1000, message: 'Connection timeout' });
         }, timeout * 1000);
-
-        const host = url.replace(/^(?:https?:\/\/)?/, '').split(/[/?#:]/)[0];
         socket.connect(port || 80, host, () => {
           clearTimeout(timer);
           socket.destroy();
           resolve({ up: true, latency: Date.now() - start, message: `Connected to port ${port || 80}` });
         });
-
         socket.on('error', (err) => {
           clearTimeout(timer);
           resolve({ up: false, latency: Date.now() - start, message: err.message });
@@ -63,16 +81,29 @@ async function runCheck(
       latency = tcpResult.latency;
       message = tcpResult.message;
     } else if (type === 'icmp') {
-      const ping = await import('ping');
+      // Use child_process to call system ping directly — most reliable in Docker
+      const { execFile } = await import('child_process');
+      const { promisify } = await import('util');
+      const execFileAsync = promisify(execFile);
       const host = url.replace(/^(?:https?:\/\/)?/, '').split(/[/?#:]/)[0];
-      console.log(`[ICMP] Pinging host: ${host}`);
-      const res = await ping.default.promise.probe(host, { timeout });
-      console.log(`[ICMP] Result for ${host}: alive=${res.alive}, time=${res.time}`);
-      latency = res.alive && res.time !== 'unknown' ? Number(res.time) : timeout * 1000;
-      up = res.alive;
-      message = res.alive ? `Ping OK (${res.time}ms)` : 'Ping timeout or unreachable';
+      console.log(`[ICMP] Pinging: ${host}`);
+      try {
+        const { stdout } = await execFileAsync('ping', ['-c', '1', '-W', String(timeout), host], {
+          timeout: (timeout + 2) * 1000,
+        });
+        // Parse RTT from ping output: e.g. "rtt min/avg/max/mdev = 1.234/1.234/1.234/0.000 ms"
+        const rttMatch = stdout.match(/rtt[^=]+=\s*[\d.]+\/([\d.]+)\//);
+        latency = rttMatch ? parseFloat(rttMatch[1]) : Date.now() - start;
+        up = true;
+        message = `Ping OK (${latency.toFixed(1)}ms)`;
+        console.log(`[ICMP] ${host} is UP, latency=${latency}ms`);
+      } catch {
+        up = false;
+        latency = timeout * 1000;
+        message = 'Ping timeout or unreachable';
+        console.log(`[ICMP] ${host} is DOWN`);
+      }
     } else {
-      // ssl / dns / unknown — placeholder
       up = true;
       latency = Date.now() - start;
       message = `${type} check not fully implemented`;
@@ -84,24 +115,36 @@ async function runCheck(
     console.error(`[CHECK ERROR] monitor=${monitorId} type=${type}:`, error?.message);
   }
 
-  console.log(`[HEARTBEAT] monitor=${monitorId} type=${type} up=${up} latency=${latency}ms msg="${message}"`);
+  const currentStatus: 'up' | 'down' = up ? 'up' : 'down';
+  const previousStatus = lastStatus.get(monitorId);
+
+  console.log(`[HEARTBEAT] monitor=${monitorId} type=${type} status=${currentStatus} latency=${latency}ms msg="${message}"`);
 
   jsonDb.heartbeats.create({
     monitorId,
-    status: up ? 'up' : 'down',
+    status: currentStatus,
     latency,
     message,
     createdAt: Date.now(),
   });
+
+  // Fire webhook on state change (up→down or down→up)
+  if (previousStatus !== undefined && previousStatus !== currentStatus) {
+    const monitor = jsonDb.monitors.findFirst(monitorId);
+    if (monitor?.webhookUrl) {
+      console.log(`[WEBHOOK] State change for monitor ${monitorId}: ${previousStatus} → ${currentStatus}`);
+      sendWebhookNotification(monitor.webhookUrl, monitor, currentStatus, message).catch(() => {});
+    }
+  }
+
+  lastStatus.set(monitorId, currentStatus);
 }
 
 export async function scheduleAllMonitors() {
   const monitors = jsonDb.monitors.findMany().filter(m => m.active);
-
   for (const monitor of monitors) {
     await scheduleMonitorWithInterval(monitor.id, monitor.interval);
   }
-
   console.log(`Scheduled ${monitors.length} monitors`);
 }
 
@@ -113,7 +156,7 @@ export async function scheduleMonitorWithInterval(monitorId: number, intervalSec
 
   const intervalMs = intervalSeconds * 1000;
 
-  // Run first check immediately and await it
+  // Run first check immediately and await it so caller gets real status
   await runCheck(
     monitorId, monitor.type, monitor.url, monitor.port,
     monitor.timeout, monitor.keyword, monitor.expectedStatus
@@ -135,6 +178,7 @@ export function cancelMonitorSchedule(monitorId: number) {
   if (existing) {
     clearInterval(existing);
     intervals.delete(monitorId);
+    lastStatus.delete(monitorId);
     console.log(`Cancelled monitor ${monitorId}`);
   }
 }
@@ -143,9 +187,7 @@ export async function getUptimePercentage(monitorId: number): Promise<number> {
   const heartbeats = jsonDb.heartbeats.findMany(monitorId, 1440);
   const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
   const recentHeartbeats = heartbeats.filter(h => h.createdAt > cutoffTime);
-
   if (recentHeartbeats.length === 0) return 100;
-
   const upCount = recentHeartbeats.filter(h => h.status === 'up').length;
   return (upCount / recentHeartbeats.length) * 100;
 }
