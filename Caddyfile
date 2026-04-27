@@ -1,0 +1,10 @@
+# Replace monitor.yourdomain.com with your actual domain
+# Caddy auto-handles HTTPS/TLS certificates via Let's Encrypt
+
+monitor.yourdomain.com {
+    # API backend
+    reverse_proxy /api/* localhost:3001
+
+    # Web frontend
+    reverse_proxy localhost:3000
+}
