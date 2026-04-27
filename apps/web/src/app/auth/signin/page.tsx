@@ -55,7 +55,7 @@ export default function SignIn() {
           <Activity className="w-12 h-12" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-text-primary">
-          Sign in to K-Monitor
+          Sign in to Pulse
         </h2>
         <p className="mt-2 text-center text-sm text-text-secondary">
           Admin Login

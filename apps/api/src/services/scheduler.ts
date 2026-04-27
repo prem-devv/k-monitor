@@ -1,6 +1,5 @@
 import { Queue } from 'bullmq';
-import { db, schema } from '../db/index.js';
-import { eq } from 'drizzle-orm';
+import { jsonDb } from '../db/jsonDb.js';
 
 let queueInstance: Queue | null = null;
 
@@ -17,10 +16,7 @@ function getQueue(): Queue {
 }
 
 export async function scheduleMonitor(monitorId: number) {
-  const monitor = await db.query.monitors.findFirst({
-    where: eq(schema.monitors.id, monitorId),
-  });
-
+  const monitor = jsonDb.monitors.findFirst(monitorId);
   if (!monitor || !monitor.active) return;
 
   await getQueue().add('check', {
@@ -39,20 +35,14 @@ export async function scheduleMonitor(monitorId: number) {
 }
 
 export async function scheduleAllMonitors() {
-  const monitors = await db.query.monitors.findMany({
-    where: eq(schema.monitors.active, true),
-  });
-
+  const monitors = jsonDb.monitors.findMany().filter(m => m.active);
   for (const monitor of monitors) {
     await scheduleMonitorWithInterval(monitor.id, monitor.interval);
   }
 }
 
 export async function scheduleMonitorWithInterval(monitorId: number, intervalSeconds: number) {
-  const monitor = await db.query.monitors.findFirst({
-    where: eq(schema.monitors.id, monitorId),
-  });
-
+  const monitor = jsonDb.monitors.findFirst(monitorId);
   if (!monitor || !monitor.active) return;
 
   const intervalMs = (intervalSeconds || monitor.interval) * 1000;
@@ -67,14 +57,12 @@ export async function scheduleMonitorWithInterval(monitorId: number, intervalSec
     expectedStatus: monitor.expectedStatus,
   };
 
-  // Run the first check instantly
   await getQueue().add('check', jobData, {
     delay: 0,
     removeOnComplete: true,
     removeOnFail: false,
   });
 
-  // Schedule the recurring interval
   await getQueue().add('check', jobData, {
     repeat: {
       every: intervalMs,
@@ -96,10 +84,7 @@ export async function cancelMonitorSchedule(monitorId: number) {
 }
 
 export async function getUptimePercentage(monitorId: number): Promise<number> {
-  const heartbeats = await db.query.heartbeats.findMany({
-    where: eq(schema.heartbeats.monitorId, monitorId),
-  });
-
+  const heartbeats = jsonDb.heartbeats.findMany(monitorId, 1440);
   const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
   const recentHeartbeats = heartbeats.filter(h => h.createdAt > cutoffTime);
   

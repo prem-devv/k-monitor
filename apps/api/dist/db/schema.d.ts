@@ -11,9 +11,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         name: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "name";
             tableName: "monitors";
@@ -23,21 +28,35 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: string;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         type: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "type";
             tableName: "monitors";
             dataType: "string";
             columnType: "SQLiteText";
-            data: "http" | "tcp" | "icmp";
+            data: "http" | "tcp" | "icmp" | "ssl" | "dns";
             driverParam: string;
             notNull: true;
             hasDefault: true;
-            enumValues: ["http", "tcp", "icmp"];
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: ["http", "tcp", "icmp", "ssl", "dns"];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         url: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "url";
             tableName: "monitors";
@@ -47,9 +66,16 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: string;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         port: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "port";
             tableName: "monitors";
@@ -59,9 +85,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: false;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         interval: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "interval";
             tableName: "monitors";
@@ -71,9 +102,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         timeout: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "timeout";
             tableName: "monitors";
@@ -83,9 +119,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         keyword: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "keyword";
             tableName: "monitors";
@@ -95,9 +136,16 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: string;
             notNull: false;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         expectedStatus: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "expected_status";
             tableName: "monitors";
@@ -107,9 +155,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: false;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         webhookUrl: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "webhook_url";
             tableName: "monitors";
@@ -119,9 +172,33 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: string;
             notNull: false;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        maintenanceUntil: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "maintenance_until";
+            tableName: "monitors";
+            dataType: "number";
+            columnType: "SQLiteInteger";
+            data: number;
+            driverParam: number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         isPublic: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "is_public";
             tableName: "monitors";
@@ -131,9 +208,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: false;
             hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         active: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "active";
             tableName: "monitors";
@@ -143,9 +225,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: false;
             hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "created_at";
             tableName: "monitors";
@@ -155,9 +242,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         updatedAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "updated_at";
             tableName: "monitors";
@@ -167,9 +259,14 @@ export declare const monitors: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
     };
     dialect: "sqlite";
 }>;
@@ -186,9 +283,14 @@ export declare const heartbeats: import("drizzle-orm/sqlite-core").SQLiteTableWi
             driverParam: number;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         monitorId: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "monitor_id";
             tableName: "heartbeats";
@@ -198,9 +300,14 @@ export declare const heartbeats: import("drizzle-orm/sqlite-core").SQLiteTableWi
             driverParam: number;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         status: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "status";
             tableName: "heartbeats";
@@ -210,9 +317,16 @@ export declare const heartbeats: import("drizzle-orm/sqlite-core").SQLiteTableWi
             driverParam: string;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: ["up", "down"];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         latency: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "latency";
             tableName: "heartbeats";
@@ -222,9 +336,14 @@ export declare const heartbeats: import("drizzle-orm/sqlite-core").SQLiteTableWi
             driverParam: number;
             notNull: false;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         message: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "message";
             tableName: "heartbeats";
@@ -234,9 +353,16 @@ export declare const heartbeats: import("drizzle-orm/sqlite-core").SQLiteTableWi
             driverParam: string;
             notNull: false;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         createdAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "created_at";
             tableName: "heartbeats";
@@ -246,9 +372,14 @@ export declare const heartbeats: import("drizzle-orm/sqlite-core").SQLiteTableWi
             driverParam: number;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
     };
     dialect: "sqlite";
 }>;
@@ -265,9 +396,14 @@ export declare const settings: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: number;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         key: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "key";
             tableName: "settings";
@@ -277,9 +413,16 @@ export declare const settings: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: string;
             notNull: true;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         value: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "value";
             tableName: "settings";
@@ -289,9 +432,14 @@ export declare const settings: import("drizzle-orm/sqlite-core").SQLiteTableWith
             driverParam: Buffer<ArrayBufferLike>;
             notNull: false;
             hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
-        }, object>;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
     };
     dialect: "sqlite";
 }>;

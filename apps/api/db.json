@@ -1,0 +1,186 @@
+{
+  "monitors": [
+    {
+      "name": "prem",
+      "type": "http",
+      "url": "https://premx.dev",
+      "port": 80,
+      "interval": 5,
+      "timeout": 10,
+      "keyword": null,
+      "expectedStatus": 200,
+      "webhookUrl": null,
+      "isPublic": false,
+      "active": true,
+      "id": 2,
+      "maintenanceUntil": null,
+      "createdAt": 1777293120234,
+      "updatedAt": 1777293120234
+    }
+  ],
+  "heartbeats": [
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 256,
+      "message": "HTTP 200",
+      "createdAt": 1777293120504,
+      "id": 8
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 139,
+      "message": "HTTP 200",
+      "createdAt": 1777293125176,
+      "id": 9
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 133,
+      "message": "HTTP 200",
+      "createdAt": 1777293130206,
+      "id": 10
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 111,
+      "message": "HTTP 200",
+      "createdAt": 1777293135117,
+      "id": 11
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 120,
+      "message": "HTTP 200",
+      "createdAt": 1777293140172,
+      "id": 12
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 119,
+      "message": "HTTP 200",
+      "createdAt": 1777293145219,
+      "id": 13
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 112,
+      "message": "HTTP 200",
+      "createdAt": 1777293150152,
+      "id": 14
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 116,
+      "message": "HTTP 200",
+      "createdAt": 1777293155203,
+      "id": 15
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 127,
+      "message": "HTTP 200",
+      "createdAt": 1777293160161,
+      "id": 16
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 118,
+      "message": "HTTP 200",
+      "createdAt": 1777293165201,
+      "id": 17
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 115,
+      "message": "HTTP 200",
+      "createdAt": 1777293170140,
+      "id": 18
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 118,
+      "message": "HTTP 200",
+      "createdAt": 1777293175188,
+      "id": 19
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 131,
+      "message": "HTTP 200",
+      "createdAt": 1777293180143,
+      "id": 20
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 137,
+      "message": "HTTP 200",
+      "createdAt": 1777293185193,
+      "id": 21
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 124,
+      "message": "HTTP 200",
+      "createdAt": 1777293190126,
+      "id": 22
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 141,
+      "message": "HTTP 200",
+      "createdAt": 1777293195182,
+      "id": 23
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 140,
+      "message": "HTTP 200",
+      "createdAt": 1777293200218,
+      "id": 24
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 104,
+      "message": "HTTP 200",
+      "createdAt": 1777293205114,
+      "id": 25
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 132,
+      "message": "HTTP 200",
+      "createdAt": 1777293210170,
+      "id": 26
+    },
+    {
+      "monitorId": 2,
+      "status": "up",
+      "latency": 136,
+      "message": "HTTP 200",
+      "createdAt": 1777293215203,
+      "id": 27
+    }
+  ],
+  "settings": [],
+  "nextMonitorId": 3,
+  "nextHeartbeatId": 28
+}

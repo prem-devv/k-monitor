@@ -2,7 +2,7 @@ import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core'
 export const monitors = sqliteTable('monitors', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     name: text('name').notNull(),
-    type: text('type', { enum: ['http', 'tcp', 'icmp'] }).notNull().default('http'),
+    type: text('type', { enum: ['http', 'tcp', 'icmp', 'ssl', 'dns'] }).notNull().default('http'),
     url: text('url').notNull(),
     port: integer('port'),
     interval: integer('interval').notNull().default(60),
@@ -10,6 +10,7 @@ export const monitors = sqliteTable('monitors', {
     keyword: text('keyword'),
     expectedStatus: integer('expected_status'),
     webhookUrl: text('webhook_url'),
+    maintenanceUntil: integer('maintenance_until'),
     isPublic: integer('is_public', { mode: 'boolean' }).default(false),
     active: integer('active', { mode: 'boolean' }).default(true),
     createdAt: integer('created_at').notNull(),

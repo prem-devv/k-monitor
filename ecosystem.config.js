@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'k-monitor-api',
+      name: 'pulse-api',
       script: 'apps/api/dist/index.js',
       cwd: '.',
       instances: 1,
@@ -19,7 +19,7 @@ module.exports = {
       merge_logs: true,
     },
     {
-      name: 'k-monitor-web',
+      name: 'pulse-web',
       script: 'apps/web/start.js',
       cwd: '.',
       instances: 1,

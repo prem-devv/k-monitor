@@ -5,7 +5,6 @@ import swaggerUi from '@fastify/swagger-ui';
 import { monitorRoutes } from './routes/monitors.js';
 import { statusRoutes } from './routes/status.js';
 import { createWorker } from './workers/monitoring.js';
-import { db, schema } from './db/index.js';
 import { scheduleAllMonitors } from './services/scheduler.js';
 
 const fastify = Fastify({
@@ -42,7 +41,7 @@ async function start() {
     await fastify.register(swagger, {
       openapi: {
         info: {
-          title: 'K-Monitor API',
+          title: 'Pulse API',
           version: '1.0.0',
         },
       },

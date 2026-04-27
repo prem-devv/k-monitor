@@ -7,7 +7,7 @@ const createMonitorSchema = z.object({
     type: z.enum(['http', 'tcp', 'icmp']),
     url: z.string().min(1),
     port: z.number().optional(),
-    interval: z.number().min(30).max(3600).default(60),
+    interval: z.number().min(5).max(3600).default(60),
     timeout: z.number().min(5).max(30).default(10),
     keyword: z.string().optional(),
     expectedStatus: z.number().min(100).max(599).optional(),
@@ -109,7 +109,7 @@ export async function monitorRoutes(fastify) {
         await db.update(schema.monitors)
             .set({ ...data, updatedAt: Date.now() })
             .where(eq(schema.monitors.id, parseInt(id)));
-        if (data.interval || data.url) {
+        if (data.interval !== undefined || data.url !== undefined || data.type !== undefined || data.port !== undefined) {
             try {
                 await cancelMonitorSchedule(parseInt(id));
                 await scheduleMonitorWithInterval(parseInt(id), data.interval || existing.interval);

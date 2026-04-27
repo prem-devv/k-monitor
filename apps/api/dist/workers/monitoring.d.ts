@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 interface MonitorJob {
     monitorId: number;
-    type: 'http' | 'tcp' | 'icmp';
+    type: 'http' | 'tcp' | 'icmp' | 'ssl' | 'dns';
     url: string;
     port?: number;
     timeout: number;

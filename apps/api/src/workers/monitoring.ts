@@ -1,6 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import { db, schema } from '../db/index.js';
-import { eq, desc } from 'drizzle-orm';
+import { jsonDb } from '../db/jsonDb.js';
 import axios from 'axios';
 import net from 'net';
 import { exec } from 'child_process';
@@ -211,19 +210,17 @@ async function handleJob(job: Job<MonitorJob>) {
       result = { up: false, latency: 0, message: 'Unknown monitor type' };
   }
 
-  const monitor = await db.query.monitors.findFirst({
-    where: eq(schema.monitors.id, monitorId),
-  });
+  const monitor = jsonDb.monitors.findFirst(monitorId);
 
   if (!monitor) {
     console.warn(`Monitor ${monitorId} not found. Skipping heartbeat.`);
     return result;
   }
 
-  const lastStatus = await getLastHeartbeatStatus(monitorId);
-  const inMaintenance = monitor?.maintenanceUntil && (monitor.maintenanceUntil * 1000 > Date.now());
+  const lastStatus = getLastHeartbeatStatus(monitorId);
+  const inMaintenance = monitor.maintenanceUntil && (monitor.maintenanceUntil > Date.now());
 
-  await db.insert(schema.heartbeats).values({
+  jsonDb.heartbeats.create({
     monitorId: monitorId,
     status: result.up ? 'up' : 'down',
     latency: result.latency,
@@ -254,12 +251,8 @@ async function handleJob(job: Job<MonitorJob>) {
   return result;
 }
 
-async function getLastHeartbeatStatus(monitorId: number): Promise<boolean> {
-  const heartbeats = await db.query.heartbeats.findMany({
-    where: eq(schema.heartbeats.monitorId, monitorId),
-    orderBy: [desc(schema.heartbeats.createdAt)],
-    limit: 1,
-  });
+function getLastHeartbeatStatus(monitorId: number): boolean {
+  const heartbeats = jsonDb.heartbeats.findMany(monitorId, 1);
   
   if (heartbeats.length === 0) return true;
   
@@ -274,11 +267,11 @@ async function sendWebhook(webhookUrl: string, data: any) {
 
     if (webhookUrl.includes('discord.com')) {
       payload = {
-        content: `**[K-Monitor Alert]** ${messageText}\n_Message:_ ${data.message}`
+        content: `**[Pulse Alert]** ${messageText}\n_Message:_ ${data.message}`
       };
     } else if (webhookUrl.includes('hooks.slack.com')) {
       payload = {
-        text: `*[K-Monitor Alert]* ${messageText}\n_Message:_ ${data.message}`
+        text: `*[Pulse Alert]* ${messageText}\n_Message:_ ${data.message}`
       };
     } else if (webhookUrl.includes('chat.googleapis.com')) {
       payload = {
@@ -302,9 +295,9 @@ async function sendEmailAlert(data: any) {
       auth: { user: 'mockUser', pass: 'mockPass' }
     });
     await transporter.sendMail({
-      from: '"K-Monitor Alerts" <noreply@kmonitor.local>',
+      from: '"Pulse Alerts" <noreply@pulse.local>',
       to: 'admin@kmonitor.local', // Would use settings.notificationEmail
-      subject: `[K-Monitor Alert] ${data.name} is ${data.status.toUpperCase()}`,
+      subject: `[Pulse Alert] ${data.name} is ${data.status.toUpperCase()}`,
       text: `Monitor: ${data.name}\nStatus: ${data.status.toUpperCase()}\nMessage: ${data.message}\nTime: ${new Date(data.timestamp).toISOString()}`
     });
     console.log(`Email alert dispatched internally for ${data.name} (${data.status.toUpperCase()})`);
