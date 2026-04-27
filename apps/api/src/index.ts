@@ -19,7 +19,7 @@ async function start() {
     await fastify.register(swagger, {
       openapi: {
         info: {
-          title: 'Pulse API',
+          title: 'K-Monitor API',
           version: '1.0.0',
         },
       },

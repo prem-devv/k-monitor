@@ -1,19 +1,12 @@
-import { db, schema } from '../db/index.js';
-import { eq } from 'drizzle-orm';
+import { jsonDb } from '../db/jsonDb.js';
 import axios from 'axios';
 export async function statusRoutes(fastify) {
     fastify.get('/status', async (request, reply) => {
-        const monitors = await db.query.monitors.findMany({
-            where: eq(schema.monitors.isPublic, true),
-        });
+        const monitors = jsonDb.monitors.findMany().filter(m => m.isPublic);
         const publicMonitors = await Promise.all(monitors.map(async (monitor) => {
-            const heartbeats = await db.query.heartbeats.findMany({
-                where: eq(schema.heartbeats.monitorId, monitor.id),
-                orderBy: (heartbeats, { desc }) => [desc(heartbeats.createdAt)],
-                limit: 1,
-            });
+            const heartbeats = jsonDb.heartbeats.findMany(monitor.id, 1);
             const lastHeartbeat = heartbeats.length > 0 ? heartbeats[0] : null;
-            const uptime = await calculateUptime(monitor.id);
+            const uptime = calculateUptime(monitor.id);
             return {
                 id: monitor.id,
                 name: monitor.name,
@@ -44,7 +37,7 @@ export async function statusRoutes(fastify) {
         try {
             await axios.post(url, {
                 type: 'test',
-                message: 'K-Monitor webhook test',
+                message: 'Pulse webhook test',
                 timestamp: Date.now(),
             });
             return reply.send({ success: true });
@@ -57,10 +50,8 @@ export async function statusRoutes(fastify) {
         }
     });
 }
-async function calculateUptime(monitorId) {
-    const heartbeats = await db.query.heartbeats.findMany({
-        where: eq(schema.heartbeats.monitorId, monitorId),
-    });
+function calculateUptime(monitorId) {
+    const heartbeats = jsonDb.heartbeats.findMany(monitorId, 1440);
     const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
     const recentHeartbeats = heartbeats.filter(h => h.createdAt > cutoffTime);
     if (recentHeartbeats.length === 0)

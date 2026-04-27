@@ -1,5 +1,4 @@
-import { db, schema } from '../db/index.js';
-import { eq } from 'drizzle-orm';
+import { jsonDb } from '../db/jsonDb.js';
 import { z } from 'zod';
 import { scheduleMonitorWithInterval, cancelMonitorSchedule } from '../services/scheduler.js';
 const createMonitorSchema = z.object({
@@ -16,9 +15,7 @@ const createMonitorSchema = z.object({
 });
 const updateMonitorSchema = createMonitorSchema.partial();
 async function getUptimePercentage(monitorId) {
-    const heartbeats = await db.query.heartbeats.findMany({
-        where: eq(schema.heartbeats.monitorId, monitorId),
-    });
+    const heartbeats = jsonDb.heartbeats.findMany(monitorId, 1440);
     const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
     const recentHeartbeats = heartbeats.filter(h => h.createdAt > cutoffTime);
     if (recentHeartbeats.length === 0)
@@ -28,15 +25,9 @@ async function getUptimePercentage(monitorId) {
 }
 export async function monitorRoutes(fastify) {
     fastify.get('/monitors', async (request, reply) => {
-        const monitors = await db.query.monitors.findMany({
-            orderBy: (monitors, { desc }) => [desc(monitors.createdAt)],
-        });
+        const monitors = jsonDb.monitors.findMany().sort((a, b) => b.createdAt - a.createdAt);
         const monitorsWithStatus = await Promise.all(monitors.map(async (monitor) => {
-            const heartbeats = await db.query.heartbeats.findMany({
-                where: eq(schema.heartbeats.monitorId, monitor.id),
-                orderBy: (heartbeats, { desc }) => [desc(heartbeats.createdAt)],
-                limit: 1,
-            });
+            const heartbeats = jsonDb.heartbeats.findMany(monitor.id, 1);
             const lastHeartbeat = heartbeats.length > 0 ? heartbeats[0] : null;
             const uptime = await getUptimePercentage(monitor.id);
             return {
@@ -50,17 +41,11 @@ export async function monitorRoutes(fastify) {
     });
     fastify.get('/monitors/:id', async (request, reply) => {
         const { id } = request.params;
-        const monitor = await db.query.monitors.findFirst({
-            where: eq(schema.monitors.id, parseInt(id)),
-        });
+        const monitor = jsonDb.monitors.findFirst(parseInt(id));
         if (!monitor) {
             return reply.code(404).send({ error: 'Monitor not found' });
         }
-        const heartbeats = await db.query.heartbeats.findMany({
-            where: eq(schema.heartbeats.monitorId, monitor.id),
-            orderBy: (heartbeats, { desc }) => [desc(heartbeats.createdAt)],
-            limit: 1,
-        });
+        const heartbeats = jsonDb.heartbeats.findMany(monitor.id, 1);
         const lastHeartbeat = heartbeats.length > 0 ? heartbeats[0] : null;
         const uptime = await getUptimePercentage(monitor.id);
         return reply.send({
@@ -72,8 +57,7 @@ export async function monitorRoutes(fastify) {
     });
     fastify.post('/monitors', async (request, reply) => {
         const data = createMonitorSchema.parse(request.body);
-        const now = Date.now();
-        const result = await db.insert(schema.monitors).values({
+        const monitor = jsonDb.monitors.create({
             name: data.name,
             type: data.type,
             url: data.url || '',
@@ -85,10 +69,7 @@ export async function monitorRoutes(fastify) {
             webhookUrl: data.webhookUrl || null,
             isPublic: data.isPublic,
             active: true,
-            createdAt: now,
-            updatedAt: now,
-        }).returning();
-        const monitor = result[0];
+        });
         try {
             await scheduleMonitorWithInterval(monitor.id, monitor.interval);
         }
@@ -100,15 +81,14 @@ export async function monitorRoutes(fastify) {
     fastify.put('/monitors/:id', async (request, reply) => {
         const { id } = request.params;
         const data = updateMonitorSchema.parse(request.body);
-        const existing = await db.query.monitors.findFirst({
-            where: eq(schema.monitors.id, parseInt(id)),
-        });
+        const existing = jsonDb.monitors.findFirst(parseInt(id));
         if (!existing) {
             return reply.code(404).send({ error: 'Monitor not found' });
         }
-        await db.update(schema.monitors)
-            .set({ ...data, updatedAt: Date.now() })
-            .where(eq(schema.monitors.id, parseInt(id)));
+        const updated = jsonDb.monitors.update(parseInt(id), data);
+        if (!updated) {
+            return reply.code(404).send({ error: 'Monitor not found' });
+        }
         if (data.interval !== undefined || data.url !== undefined || data.type !== undefined || data.port !== undefined) {
             try {
                 await cancelMonitorSchedule(parseInt(id));
@@ -118,16 +98,11 @@ export async function monitorRoutes(fastify) {
                 console.error('Failed to reschedule monitor:', error);
             }
         }
-        const updated = await db.query.monitors.findFirst({
-            where: eq(schema.monitors.id, parseInt(id)),
-        });
         return reply.send(updated);
     });
     fastify.delete('/monitors/:id', async (request, reply) => {
         const { id } = request.params;
-        const existing = await db.query.monitors.findFirst({
-            where: eq(schema.monitors.id, parseInt(id)),
-        });
+        const existing = jsonDb.monitors.findFirst(parseInt(id));
         if (!existing) {
             return reply.code(404).send({ error: 'Monitor not found' });
         }
@@ -137,17 +112,13 @@ export async function monitorRoutes(fastify) {
         catch (error) {
             console.error('Failed to cancel monitor schedule:', error);
         }
-        await db.delete(schema.monitors).where(eq(schema.monitors.id, parseInt(id)));
+        jsonDb.monitors.delete(parseInt(id));
         return reply.code(204).send();
     });
     fastify.get('/monitors/:id/heartbeats', async (request, reply) => {
         const { id } = request.params;
         const { limit = '1440' } = request.query;
-        const heartbeats = await db.query.heartbeats.findMany({
-            where: eq(schema.heartbeats.monitorId, parseInt(id)),
-            orderBy: (heartbeats, { desc }) => [desc(heartbeats.createdAt)],
-            limit: parseInt(limit) || 1440,
-        });
+        const heartbeats = jsonDb.heartbeats.findMany(parseInt(id), parseInt(limit) || 1440);
         return reply.send(heartbeats);
     });
 }

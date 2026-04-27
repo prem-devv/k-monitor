@@ -1,92 +1,98 @@
-import { Queue } from 'bullmq';
-import { db, schema } from '../db/index.js';
-import { eq } from 'drizzle-orm';
-let queueInstance = null;
-function getQueue() {
-    if (!queueInstance) {
-        queueInstance = new Queue('monitoring', {
-            connection: {
-                host: process.env.REDIS_HOST || 'localhost',
-                port: parseInt(process.env.REDIS_PORT || '6379'),
-            },
-        });
-    }
-    return queueInstance;
-}
+import { jsonDb } from '../db/jsonDb.js';
+const intervals = new Map();
 export async function scheduleMonitor(monitorId) {
-    const monitor = await db.query.monitors.findFirst({
-        where: eq(schema.monitors.id, monitorId),
-    });
+    const monitor = jsonDb.monitors.findFirst(monitorId);
     if (!monitor || !monitor.active)
         return;
-    await getQueue().add('check', {
-        monitorId: monitor.id,
-        type: monitor.type,
-        url: monitor.url,
-        port: monitor.port,
-        timeout: monitor.timeout,
-        keyword: monitor.keyword,
-        expectedStatus: monitor.expectedStatus,
-    }, {
-        delay: 0,
-        removeOnComplete: true,
-        removeOnFail: false,
-    });
+    runCheck(monitorId, monitor.type, monitor.url, monitor.port, monitor.timeout, monitor.keyword, monitor.expectedStatus);
 }
-export async function scheduleAllMonitors() {
-    const monitors = await db.query.monitors.findMany({
-        where: eq(schema.monitors.active, true),
-    });
-    for (const monitor of monitors) {
-        await scheduleMonitorWithInterval(monitor.id, monitor.interval);
-    }
-}
-export async function scheduleMonitorWithInterval(monitorId, intervalSeconds) {
-    const monitor = await db.query.monitors.findFirst({
-        where: eq(schema.monitors.id, monitorId),
-    });
-    if (!monitor || !monitor.active)
-        return;
-    const intervalMs = (intervalSeconds || monitor.interval) * 1000;
-    const jobData = {
-        monitorId: monitor.id,
-        type: monitor.type,
-        url: monitor.url,
-        port: monitor.port,
-        timeout: monitor.timeout,
-        keyword: monitor.keyword,
-        expectedStatus: monitor.expectedStatus,
-    };
-    // Run the first check instantly
-    await getQueue().add('check', jobData, {
-        delay: 0,
-        removeOnComplete: true,
-        removeOnFail: false,
-    });
-    // Schedule the recurring interval
-    await getQueue().add('check', jobData, {
-        repeat: {
-            every: intervalMs,
-        },
-    });
-}
-export async function cancelMonitorSchedule(monitorId) {
+async function runCheck(monitorId, type, url, port, timeout, keyword, expectedStatus) {
+    const start = Date.now();
+    let result;
     try {
-        const jobs = await getQueue().getJobs(['delayed', 'waiting', 'active']);
-        for (const job of jobs) {
-            if (job.data?.monitorId === monitorId) {
-                await job.remove();
+        if (type === 'http') {
+            const { default: axios } = await import('axios');
+            const https = await import('https');
+            const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+            const response = await axios.get(url, {
+                timeout: timeout * 1000,
+                validateStatus: () => true,
+                httpsAgent,
+            });
+            const latency = Date.now() - start;
+            if (expectedStatus && response.status !== expectedStatus) {
+                result = { up: false, latency, message: `Expected ${expectedStatus}, got ${response.status}` };
             }
+            else if (keyword && !response.data.includes(keyword)) {
+                result = { up: false, latency, message: `Keyword "${keyword}" not found` };
+            }
+            else {
+                result = { up: true, latency, message: `HTTP ${response.status}` };
+            }
+        }
+        else if (type === 'tcp') {
+            const net = await import('net');
+            result = await new Promise((resolve) => {
+                const socket = new net.Socket();
+                const timer = setTimeout(() => {
+                    socket.destroy();
+                    resolve({ up: false, latency: timeout * 1000, message: 'Connection timeout' });
+                }, timeout * 1000);
+                socket.connect(port || 80, url.replace(/^(?:https?:\/\/)?/, '').split(':')[0], () => {
+                    clearTimeout(timer);
+                    resolve({ up: true, latency: Date.now() - start, message: `Connected to port ${port || 80}` });
+                });
+                socket.on('error', (err) => {
+                    clearTimeout(timer);
+                    resolve({ up: false, latency: Date.now() - start, message: err.message });
+                });
+            });
+        }
+        else {
+            result = { up: true, latency: Date.now() - start, message: `${type} check completed` };
         }
     }
     catch (error) {
-        console.error('Failed to cancel monitor schedule:', error);
+        result = { up: false, latency: Date.now() - start, message: error.message || 'Check failed' };
+    }
+    jsonDb.heartbeats.create({
+        monitorId,
+        status: result.up ? 'up' : 'down',
+        latency: result.latency,
+        message: result.message,
+        createdAt: Date.now(),
+    });
+}
+export async function scheduleAllMonitors() {
+    const monitors = jsonDb.monitors.findMany().filter(m => m.active);
+    for (const monitor of monitors) {
+        scheduleMonitorWithInterval(monitor.id, monitor.interval);
+    }
+    console.log(`Scheduled ${monitors.length} monitors`);
+}
+export async function scheduleMonitorWithInterval(monitorId, intervalSeconds) {
+    const monitor = jsonDb.monitors.findFirst(monitorId);
+    if (!monitor || !monitor.active)
+        return;
+    cancelMonitorSchedule(monitorId);
+    const intervalMs = intervalSeconds * 1000;
+    runCheck(monitorId, monitor.type, monitor.url, monitor.port, monitor.timeout, monitor.keyword, monitor.expectedStatus);
+    const intervalId = setInterval(() => {
+        runCheck(monitorId, monitor.type, monitor.url, monitor.port, monitor.timeout, monitor.keyword, monitor.expectedStatus);
+    }, intervalMs);
+    intervals.set(monitorId, intervalId);
+    console.log(`Monitor ${monitorId} scheduled every ${intervalSeconds}s`);
+}
+export function cancelMonitorSchedule(monitorId) {
+    const existing = intervals.get(monitorId);
+    if (existing) {
+        clearInterval(existing);
+        intervals.delete(monitorId);
+        console.log(`Cancelled monitor ${monitorId}`);
     }
 }
 export async function getUptimePercentage(monitorId) {
-    const heartbeats = await db.query.heartbeats.findMany({
-        where: eq(schema.heartbeats.monitorId, monitorId),
-    });
+    const heartbeats = jsonDb.heartbeats.findMany(monitorId, 1440);
     const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
     const recentHeartbeats = heartbeats.filter(h => h.createdAt > cutoffTime);
     if (recentHeartbeats.length === 0)
@@ -94,4 +100,3 @@ export async function getUptimePercentage(monitorId) {
     const upCount = recentHeartbeats.filter(h => h.status === 'up').length;
     return (upCount / recentHeartbeats.length) * 100;
 }
-export { Queue };

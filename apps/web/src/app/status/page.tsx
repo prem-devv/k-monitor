@@ -82,7 +82,7 @@ export default function PublicStatusPage() {
               <span className="text-lg font-bold text-mono">PULSE</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${config.bgColor} animate-pulse`} />
+              <span className={`w-2 h-2 rounded-full ${config.bgColor} animate-k-monitor`} />
               <span className={`text-sm font-medium ${config.color}`}>{config.label}</span>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function PublicStatusPage() {
         </div>
 
         <footer className="mt-12 text-center text-text-muted text-sm">
-          <p>Powered by <span className="text-neon-cyan">Pulse</span></p>
+          <p>Powered by <span className="text-neon-cyan">K-Monitor</span></p>
         </footer>
       </main>
     </div>

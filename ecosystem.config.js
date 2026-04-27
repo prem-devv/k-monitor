@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'pulse-api',
+      name: 'k-monitor-api',
       script: 'apps/api/dist/index.js',
       cwd: '.',
       instances: 1,
@@ -19,9 +19,10 @@ module.exports = {
       merge_logs: true,
     },
     {
-      name: 'pulse-web',
-      script: 'apps/web/start.js',
-      cwd: '.',
+      name: 'k-monitor-web',
+      script: 'npm',
+      args: 'start',
+      cwd: './apps/web',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
@@ -29,8 +30,8 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
       },
-      error_file: 'logs/web-error.log',
-      out_file: 'logs/web-out.log',
+      error_file: '../../logs/web-error.log',
+      out_file: '../../logs/web-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
     },

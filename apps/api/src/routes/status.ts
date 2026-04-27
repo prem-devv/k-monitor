@@ -47,7 +47,7 @@ export async function statusRoutes(fastify: FastifyInstance) {
     try {
       await axios.post(url, {
         type: 'test',
-        message: 'Pulse webhook test',
+        message: 'K-Monitor webhook test',
         timestamp: Date.now(),
       });
       return reply.send({ success: true });

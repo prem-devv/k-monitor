@@ -1,17 +1,4 @@
 services:
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   api:
     build:
       context: .
@@ -20,14 +7,9 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - DB_PATH=/app/data/db.json
     volumes:
       - api_data:/app/data
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
       interval: 15s
@@ -48,11 +30,10 @@ services:
       - NEXT_PUBLIC_API_URL=/api
       - INTERNAL_API_URL=http://api:3001
       - NEXTAUTH_URL=http://${SERVER_IP:-localhost}:3000
-      - NEXTAUTH_SECRET=pulse-secret-key-replace-this
+      - NEXTAUTH_SECRET=k-monitor-secret-key-replace-this
     depends_on:
       - api
     restart: unless-stopped
 
 volumes:
-  redis_data:
   api_data:

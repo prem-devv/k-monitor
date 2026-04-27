@@ -4,7 +4,7 @@ import './globals.css';
 import AuthProvider from '@/components/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Pulse | Professional Uptime Service',
+  title: 'K-Monitor | Professional Uptime Service',
   description: 'Self-hosted monitoring application',
 };
 

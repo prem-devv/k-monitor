@@ -21,8 +21,6 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 
 WORKDIR /app/apps/api
 ENV NODE_ENV=production
-ENV REDIS_HOST=redis
-ENV REDIS_PORT=6379
 ENV DB_PATH=/app/data/db.json
 
 EXPOSE 3001
