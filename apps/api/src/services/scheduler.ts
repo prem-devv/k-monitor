@@ -143,25 +143,52 @@ async function runCheck(
 export async function scheduleAllMonitors() {
   const monitors = jsonDb.monitors.findMany().filter(m => m.active);
   for (const monitor of monitors) {
-    await scheduleMonitorWithInterval(monitor.id, monitor.interval);
+    // On startup: only register the interval, do NOT run an immediate check.
+    // The DB already has heartbeats from before the restart — we trust those
+    // and let the first naturally-timed tick produce the next result.
+    // This prevents false "down" flashes caused by rapid re-scheduling on boot.
+    _registerInterval(monitor.id, monitor.interval);
   }
   console.log(`Scheduled ${monitors.length} monitors`);
 }
 
+/**
+ * Use this when CREATING or UPDATING a monitor.
+ * Runs an immediate check so the caller gets real status right away,
+ * then registers the recurring interval.
+ */
 export async function scheduleMonitorWithInterval(monitorId: number, intervalSeconds: number) {
   const monitor = jsonDb.monitors.findFirst(monitorId);
   if (!monitor || !monitor.active) return;
 
+  // Cancel any existing interval but keep lastStatus so webhook state is preserved
   cancelMonitorSchedule(monitorId);
 
-  const intervalMs = intervalSeconds * 1000;
-
-  // Run first check immediately and await it so caller gets real status
+  // Run first check immediately so the caller (POST /monitors) gets real status
   await runCheck(
     monitorId, monitor.type, monitor.url, monitor.port,
     monitor.timeout, monitor.keyword, monitor.expectedStatus
   );
 
+  _registerInterval(monitorId, intervalSeconds);
+}
+
+/**
+ * Internal: register (or re-register) only the setInterval for a monitor.
+ * Does NOT run an immediate check.
+ */
+function _registerInterval(monitorId: number, intervalSeconds: number) {
+  const monitor = jsonDb.monitors.findFirst(monitorId);
+  if (!monitor || !monitor.active) return;
+
+  // Clear any pre-existing interval (but preserve lastStatus)
+  const existing = intervals.get(monitorId);
+  if (existing) {
+    clearInterval(existing);
+    intervals.delete(monitorId);
+  }
+
+  const intervalMs = intervalSeconds * 1000;
   const intervalId = setInterval(() => {
     runCheck(
       monitorId, monitor.type, monitor.url, monitor.port,
@@ -170,7 +197,7 @@ export async function scheduleMonitorWithInterval(monitorId: number, intervalSec
   }, intervalMs);
 
   intervals.set(monitorId, intervalId);
-  console.log(`Monitor ${monitorId} scheduled every ${intervalSeconds}s`);
+  console.log(`Monitor ${monitorId} interval registered every ${intervalSeconds}s`);
 }
 
 export function cancelMonitorSchedule(monitorId: number) {
@@ -178,8 +205,10 @@ export function cancelMonitorSchedule(monitorId: number) {
   if (existing) {
     clearInterval(existing);
     intervals.delete(monitorId);
+    // NOTE: intentionally keep lastStatus so webhook logic can detect the next
+    // real state change after a reschedule (e.g. on monitor edit).
     lastStatus.delete(monitorId);
-    console.log(`Cancelled monitor ${monitorId}`);
+    console.log(`Cancelled schedule for monitor ${monitorId}`);
   }
 }
 
