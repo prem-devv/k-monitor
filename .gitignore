@@ -1,8 +1,32 @@
+# Dependencies
 node_modules/
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Runtime databases (never commit live data)
+db.json
 *.db
 *.db-shm
 *.db-wal
+
+# Logs
+logs/
+*.log
+
+# Environment files
 .env
-db.json
-dist/
-.next/
+.env.local
+.env.*.local
+
+# Editor & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Debug / scratch scripts
+test-*.js
+test-*.ts
